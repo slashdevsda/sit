@@ -52,6 +52,7 @@ def read_config(args):
 
     config = configparser.ConfigParser()
     config.read(path)
+    config['DEFAULT'] = config[config.sections()[0]]
     return dict(**config)
 
 
@@ -158,6 +159,15 @@ def parse_args():
     arguments = vars(args)
 
     config = read_config(arguments)
+    if arguments['env'] not in config:
+        print(
+            'no such environement: {}. Availables envs are: {}.'.format(
+                arguments['env'],
+                ', '.join(config.keys()),
+            ),
+            file=sys.stderr
+        )
+        exit(1)
     config['current'] = dict(config[arguments['env']])
     config['current'].update(
         {i:arguments[i] for i in arguments if arguments[i]}

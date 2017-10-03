@@ -1,33 +1,9 @@
 import pymssql
 
-##
-## SQL interface
-##
-
-class SQLI:
-    def connect(self):
-        pass
-
-    def retrieve_databases(self):
-        '''
-        returns a list of str
-        '''
-        pass
-
-    def retrieve_tables(self):
-        '''
-        returns a list of str
-        '''
-        pass
-
-
 
 ##
 ## GUI
 ##
-#from prompt_toolkit import prompt
-##from prompt_toolkit.styles import style_from_dict
-#from prompt_toolkit.token import Token
 
 
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -84,11 +60,8 @@ class Shell:
         self.history = InMemoryHistory()
         self.completer = SQLDynamicCompleter()
 
-
-
-    def loop(self):
-        while True:
-            text = prompt(
+    def prompt_query(self):
+            return prompt(
                 '→ ',
                 completer=self.completer,
                 lexer=SqlLexer,
@@ -96,6 +69,10 @@ class Shell:
                 auto_suggest=AutoSuggestFromHistory(),
                 complete_while_typing=False
             )
+
+    def loop(self):
+        while True:
+            text = self.prompt_query()
             print('➪ %s' % text)
             try:
                 print(self.connector.exec_query(text))
@@ -103,7 +80,3 @@ class Shell:
             except Exception as e:
                 print('error: {}'.format(str(e)))
                 self.connector.rollback_transaction()
-
-if __name__ == '__main__':
-    s = Shell()
-    s.loop()
