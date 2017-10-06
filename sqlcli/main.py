@@ -9,11 +9,16 @@
 
 import argparse
 import logging
+import configparser
+import os.path
+import sys
+
 import sqlcli.connectors as connectors
 from sqlcli.ui import Shell
-
+import sqlcli.copy
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
+
 
 def raw_mode(args, connector):
     '''
@@ -21,7 +26,11 @@ def raw_mode(args, connector):
     '''
 
     print('enterring raw mode')
-    Shell(connector).loop()
+    try:
+        Shell(connector).loop()
+    except (EOFError, KeyboardInterrupt):
+        print('exiting ...')
+        exit(0)
 
 
 def edit_mode(args, connector):
@@ -31,9 +40,36 @@ def edit_mode(args, connector):
     print('enterring edition mode')
 
 
-import configparser
-import os.path
-import sys
+def copy_mode(config, connector):
+    '''
+    copy to database
+    '''
+    args = config['args']
+    if args.get('file'):
+        fd = open(args['file'], 'r')
+    else:
+        fd = sys.stdin
+
+    if args.get('table_name'):
+        table_name = args['table_name']
+    else:
+        table_name = str(int(time.time()))
+
+    try:
+        total = sqlcli.copy.copy_from_fd(
+            table_name,
+            fd,
+            connector,
+            create_table=args.get('create_table')
+        )
+        connector.commit_transaction()
+        log.info('%s rows inserted.', total)
+    except Exception as e:
+        log.exception('Exception occured, rollback now.')
+        connector.rollback_transaction()
+        sys.exit(2)
+
+
 
 def read_config(args):
     if os.path.isfile('./sqlcli.ini'):
@@ -84,7 +120,10 @@ def validate_config(c):
         raise InvalidConfig('missing valid driver.(sqlite/sqlserver)')
 
 
-def parse_args():
+def start():
+    '''
+    Program entry point
+    '''
     parser = argparse.ArgumentParser(
     prog='sqlcli',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -132,12 +171,28 @@ def parse_args():
         'push',
         help=(
             'Copy data to remote server. Can take regular CSV'
-            ' directly from STDIN')
+            ' directly from STDIN.\n')
     )
     parser_to.add_argument(
         '-f', '--file', help='read from file instead of stdin'
     )
-    parser_to.set_defaults(func=raw_mode)
+    parser_to.add_argument(
+        '-T', '--table', dest='table_name', nargs='?',
+        help='INSERT into this table (default to current timestamp)'
+    )
+    parser_to.add_argument(
+        '-C', '--create', dest='create_table',
+        action='store_true',
+        help=(
+            'automatically attempt to create a new table. '
+            'Column types will be naively inferred from first'
+            ' lines of data.\n'
+            'eg:'
+            '`$ cat dummy.csv | sqlcli push -CT dummy_insert dev`'
+        )
+    )
+
+    parser_to.set_defaults(func=copy_mode)
 
 
     #  parser for the "copy from" command
@@ -156,6 +211,9 @@ def parse_args():
     parser.add_argument('env', help='environement')
 
     args = parser.parse_args()
+
+    # converting arguments
+    # to a regular dictionnary
     arguments = vars(args)
 
     config = read_config(arguments)
@@ -169,10 +227,20 @@ def parse_args():
         )
         exit(1)
     config['current'] = dict(config[arguments['env']])
-    config['current'].update(
-        {i:arguments[i] for i in arguments if arguments[i]}
-    )
 
+    # merge command line arguments
+    config['current'].update({
+        i:arguments[i]
+        for i in [
+            'hostname', 'user', 'password', 'port',
+            'engine', 'database'
+        ]
+        if arguments.get(i)
+    })
+    config['args'] = {
+        i:arguments[i]
+        for i in arguments if arguments.get(i)
+    }
 
 
     log.debug(str(config['current']))
@@ -180,6 +248,8 @@ def parse_args():
     connector = connectors.get_connector(config['current'])
     connector.connect()
     if hasattr(args, 'func'):
-        args.func(arguments, connector)
+        args.func(config, connector)
 
-parse_args()
+
+if __name__ == '__main__':
+    parse_args()
