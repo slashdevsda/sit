@@ -1,0 +1,8 @@
+
+* DONE rename project to `sit`
+* TODO make database drivers optional (ie: don't fail if pymssql is not present)
+* TODO define a strategy for pagination when pulling large tables
+  - hope the underlying driver's will do the job ?
+  - auto-detect PK?
+* TODO (push) tests on large tables
+* TODO define how we can alter objects/rows using $EDITOR variable
