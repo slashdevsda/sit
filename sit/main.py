@@ -25,7 +25,7 @@ def raw_mode(args, connector):
     enterring raw mode
     '''
 
-    print('enterring raw mode')
+    log.debug('enterring raw mode')
     try:
         Shell(connector).loop()
     except (EOFError, KeyboardInterrupt):
@@ -37,7 +37,7 @@ def edit_mode(args, connector):
     '''
     enterring edition mode
     '''
-    print('enterring edition mode')
+    log.debug('enterring edition mode')
 
 
 def copy_mode(config, connector):
@@ -80,8 +80,8 @@ def read_config(args):
         if os.path.isfile(args['config']):
             path = args['config']
         else:
-            print('{}: bad config path'.format(args['config']),
-                      file=sys.stderr)
+            log.error('{}: bad config path'.format(args['config']))
+            exit(1)
     else:
         # no config file available
         return {}

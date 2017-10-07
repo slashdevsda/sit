@@ -5,7 +5,7 @@
 # deserialise
 # INSERT
 
-
+import sys
 import csv
 import logging
 
@@ -55,10 +55,13 @@ def copy_from_fd(table_name, fd, connector,
         i += 1
         total += 1
         if i >= buffer_row:
+            print('\r%d' %total, end='')
+            sys.stdout.flush()
             i = 0
             connector.insert_data(table_name, reader.fieldnames, b)
             b = []
-
+    print('\r%d.' %total, end='')
+    print('\n')
     return total
 
 
