@@ -52,10 +52,12 @@ class Connector(ABC):
     def delete_object(self, objname, **args):
         pass
 
-    @abstractmethod
     def exec_query(self, q):
         r = self.cursor.execute(q)
-        return r
+        out = ', '.join([i[0] for i in self.cursor.description])
+        out += '\n'
+        out += '\n'.join([str(i) for i in r])
+        return out
 
 
     #@abstractmethod
@@ -152,18 +154,22 @@ class MSSQLConnector(Connector):
             database=self.args['database'],
             port=self.args['port']
         )
-        self.cursor = self.conn.cursor(as_dict=True)
+        self.cursor = self.conn.cursor()
 
     def exec_query(self, q):
-        r = self.cursor.execute(q)
-        return r
+        self.cursor.execute(q)
+        rows = self.cursor.fetchall()
+
+        out = ', '.join([i[0] for i in self.cursor.description])
+        out += '\n'
+        out += '\n'.join([str(i) for i in rows])
+        return out
 
     def commit_transaction(self):
         self.conn.commit()
 
     def rollback_transaction(self):
         self.conn.rollback()
-
 
     def prepare_bulk_insert_query(self, table_name, line_list, columns):
         '''
@@ -206,11 +212,6 @@ class SQLiteConnector(Connector):
         self.conn = sqlite3.connect(self.args['database'])
         self.cursor = self.conn.cursor()
 
-    def exec_query(self, q):
-        r = self.cursor.execute(q)
-
-        return '\n'.join([str(i) for i in r])
-
     def commit_transaction(self):
         self.conn.commit()
 
@@ -219,12 +220,8 @@ class SQLiteConnector(Connector):
 
     # bulk data insertion / query
 
-    ## utils
-
-
-
     def fetch_data(self, table, columns, offset, limit, **args):
-        pass
+        raise NotImplemented()
 
 
 CONNECTORS = {
