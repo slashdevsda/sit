@@ -13,9 +13,9 @@ import configparser
 import os.path
 import sys
 
-import sqlcli.connectors as connectors
-from sqlcli.ui import Shell
-import sqlcli.copy
+import sit.connectors as connectors
+from sit.ui import Shell
+import sit.copy
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ def copy_mode(config, connector):
         table_name = str(int(time.time()))
 
     try:
-        total = sqlcli.copy.copy_from_fd(
+        total = sit.copy.copy_from_fd(
             table_name,
             fd,
             connector,
@@ -72,10 +72,10 @@ def copy_mode(config, connector):
 
 
 def read_config(args):
-    if os.path.isfile('./sqlcli.ini'):
-        path = './sqlcli.ini'
-    elif os.path.isfile('~/.sqlcli.ini'):
-        path = '~/.sqlcli.ini'
+    if os.path.isfile('./sit.ini'):
+        path = './sit.ini'
+    elif os.path.isfile('~/.sit.ini'):
+        path = '~/.sit.ini'
     elif args.get('config'):
         if os.path.isfile(args['config']):
             path = args['config']
@@ -125,14 +125,14 @@ def start():
     Program entry point
     '''
     parser = argparse.ArgumentParser(
-    prog='sqlcli',
+    prog='sit',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument(
         '-c', '--config',
         help=(
-            'read configuration from file (default to ./sqlcli.ini, '
-            'fallback on ~/.sqlcli.ini'
+            'read configuration from file (default to ./sit.ini, '
+            'fallback on ~/.sit.ini'
             )
     )
     parser.add_argument('-u', '--user', help='username used')
@@ -188,7 +188,7 @@ def start():
             'Column types will be naively inferred from first'
             ' lines of data.\n'
             'eg:'
-            '`$ cat dummy.csv | sqlcli push -CT dummy_insert dev`'
+            '`$ cat dummy.csv | sit push -CT dummy_insert dev`'
         )
     )
 
