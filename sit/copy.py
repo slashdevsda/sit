@@ -65,7 +65,10 @@ def copy_from_fd(table_name, fd, connector,
     return total
 
 
-def copy_to_fd(fd, connector):
+def copy_to_fd(table_name, fd, connector, arglist="*", force_query=False):
     '''
     '''
-    pass
+    writer = csv.writer(fd)
+    writer.writerows(
+        connector.fetch_data(table_name, arglist, force_query=force_query)
+    )

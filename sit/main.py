@@ -1,12 +1,3 @@
-#
-# SQLCLI
-#
-
-# Automate your workflow with databases
-
-# sqlcli raw
-
-
 import argparse
 import logging
 import configparser
@@ -16,6 +7,7 @@ import sys
 import sit.connectors as connectors
 from sit.ui import Shell
 import sit.copy
+
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
@@ -70,6 +62,33 @@ def copy_mode(config, connector):
         sys.exit(2)
 
 
+def pull_mode(config, connector):
+    '''
+    copy from database
+    '''
+    args = config['args']
+    if args.get('file'):
+        fd = open(args['file'], 'w+')
+    else:
+        fd = sys.stdout
+
+    if args.get('table_name'):
+        table_name = args['table_name']
+    else:
+        log.error('need a table name')
+        exit(1)
+
+    try:
+        total = sit.copy.copy_to_fd(
+            table_name,
+            fd,
+            connector,
+        )
+    except Exception as e:
+        log.exception('Exception occured.')
+        sys.exit(2)
+
+
 
 def read_config(args):
     if os.path.isfile('./sit.ini'):
@@ -99,6 +118,7 @@ def validate_config(c):
     '''
     quickly validate config or current env
     '''
+    valid_driver_list = ('sqlserver', 'sqlite')
     # todo: deport to connector
     if c['current'].get('driver') == 'sqlserver':
         if not c['current'].get('hostname'):
@@ -113,11 +133,17 @@ def validate_config(c):
             raise InvalidConfig('missing port')
         if not c['current'].get('driver'):
             raise InvalidConfig('missing driver')
+
     elif c['current'].get('driver') == 'sqlite':
         if not c['current'].get('database'):
             raise InvalidConfig('missing database')
     else:
-        raise InvalidConfig('missing valid driver.(sqlite/sqlserver)')
+        raise InvalidConfig(
+            'invalid driver. Available choices are ({})'.format(
+                ', '.join(valid_driver_list)
+            )
+        )
+
 
 
 def start():
@@ -205,8 +231,12 @@ def start():
     parser_from.add_argument(
         '-f', '--file', help='write to file instead of stdout'
     )
+    parser_from.add_argument(
+        '-T', '--table', dest='table_name', nargs='?',
+        help='extract data from this table'
+    )
 
-    parser_from.set_defaults(func=raw_mode)
+    parser_from.set_defaults(func=pull_mode)
 
     parser.add_argument('env', help='environement')
 

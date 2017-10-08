@@ -54,15 +54,36 @@ class Connector(ABC):
 
     def exec_query(self, q):
         r = self.cursor.execute(q)
-        out = ', '.join([i[0] for i in self.cursor.description])
-        out += '\n'
-        out += '\n'.join([str(i) for i in r])
-        return out
+        if r and self.cursor.description:
+            out = ', '.join([i[0] for i in self.cursor.description])
+            out += '\n'
+            out += '\n'.join([str(i) for i in r])
+            return out
+        else:
+            return ''
+
+    def prepare_bulk_select_query(self, table_name, columns):
+        q = 'SELECT {} FROM {};'.format(
+            ', '.join(columns),
+            table_name
+        )
+        return q
+
 
 
     #@abstractmethod
-    def fetch_data(self, table, columns, offset, limit, **args):
-        pass
+    def fetch_data(self, table, columns, force_query=False, **args):
+        '''
+        generator
+        '''
+        q = force_query if force_query else self.prepare_bulk_select_query(table, columns)
+
+        rows = self.cursor.execute(q)
+        header = map(lambda x:x[0],  self.cursor.description)
+        yield list(header)
+
+        for item in rows:
+            yield item
 
 
     # Common features for each driver
@@ -105,7 +126,8 @@ class Connector(ABC):
         try:
             self.exec_query(q)
             return True
-        except sqlite3.OperationalError:
+        except sqlite3.OperationalError as e:
+            log.exception(e)
             log.warn('table %s already exists', table_name)
             return False
 
@@ -187,9 +209,6 @@ class MSSQLConnector(Connector):
         ])
         return q
 
-    def fetch_data(self, table, columns, offset, limit, **args):
-        pass
-
 
 
 #
@@ -218,10 +237,6 @@ class SQLiteConnector(Connector):
     def rollback_transaction(self):
         self.conn.rollback()
 
-    # bulk data insertion / query
-
-    def fetch_data(self, table, columns, offset, limit, **args):
-        raise NotImplemented()
 
 
 CONNECTORS = {
