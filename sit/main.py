@@ -25,12 +25,6 @@ def raw_mode(args, connector):
         exit(0)
 
 
-def edit_mode(args, connector):
-    '''
-    enterring edition mode
-    '''
-    log.debug('enterring edition mode')
-
 
 def copy_mode(config, connector):
     '''
@@ -72,10 +66,10 @@ def pull_mode(config, connector):
     else:
         fd = sys.stdout
 
-    if args.get('table_name'):
-        table_name = args['table_name']
+    if args.get('table_name') or args.get('query'):
+        table_name = args.get('table_name')
     else:
-        log.error('need a table name')
+        log.error('need at leat a table name (-T) or a custom query (-q)')
         exit(1)
 
     try:
@@ -83,6 +77,7 @@ def pull_mode(config, connector):
             table_name,
             fd,
             connector,
+            force_query=args.get('query')
         )
     except Exception as e:
         log.exception('Exception occured.')
@@ -170,19 +165,6 @@ def start():
 
     subparsers = parser.add_subparsers(help='* sub-commands help *')
 
-    #  parser for the "edit" command
-    parser_edit = subparsers.add_parser(
-        'edit',
-        help=(
-            'edit an arbitrary object, using $EDITOR variable. '
-            'In case of a table, only the first 100 rows will be fetched.')
-    )
-    parser_edit.add_argument(
-        'object', help='Object\'s name'
-    )
-    parser_edit.set_defaults(func=edit_mode)
-
-
     #  parser for the "raw" command
     parser_raw = subparsers.add_parser(
         'raw',
@@ -234,6 +216,11 @@ def start():
     parser_from.add_argument(
         '-T', '--table', dest='table_name', nargs='?',
         help='extract data from this table'
+    )
+    parser_from.add_argument(
+        '-q', '--query', dest='query',
+        help='run a custom sqlquery for data retrieval',
+        nargs='?'
     )
 
     parser_from.set_defaults(func=pull_mode)
