@@ -31,7 +31,7 @@ positional arguments:
     raw                 open an SQL shell on the remote server.
     push                Copy data to remote server. Can take regular CSV
                         directly from STDIN.
-    pull                (not implemented)  Retrieve data from remote server.
+    pull                Retrieve data from remote server.
 	                    Outputs regular CSV on stdout
   env                   environement
 
@@ -55,7 +55,7 @@ optional arguments:
 
 ## Ini file
 
-When incoked, `sit` looks for an `sit.ini` file located in your current directory.
+When invoked, `sit` looks for an `sit.ini` file located in your current directory.
 This file primarily avoids very long command lines.
 
 
@@ -96,6 +96,16 @@ $ sit push -f records.csv -CT records local_sqlite
 $ sit raw dev
 ```
 
+
+```shell
+# Fetch "test"'s table content from env. `lite`, then
+# insert it into the table named "test", creating it
+# if it does not exists.
+#
+# since we are using pipes and python's generator,
+# the one below should work even with big files
+$ sit pull -T test lite | python sit push -CT test dev
+```
 
 ## Features
 
