@@ -60,6 +60,14 @@ def copy_from_fd(table_name, fd, connector,
             i = 0
             connector.insert_data(table_name, reader.fieldnames, b)
             b = []
+
+
+    # if buffer still contains data
+    # at the end of file
+    if len(b):
+        connector.insert_data(table_name, reader.fieldnames, b)
+
+
     print('\r%d.' %total, end='')
     print('\n')
     return total
