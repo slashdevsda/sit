@@ -180,8 +180,14 @@ class MSSQLConnector(Connector):
 
     def exec_query(self, q):
         self.cursor.execute(q)
-        rows = self.cursor.fetchall()
+        rows = None
+        try:
+            rows = self.cursor.fetchall()
+        except Exception as e:
+            log.warn('warn:', exc_info=e)
 
+        if not rows or not hasattr(self.cursor, 'description'):
+            return ''
         out = ', '.join([i[0] for i in self.cursor.description])
         out += '\n'
         out += '\n'.join([str(i) for i in rows])
@@ -209,6 +215,19 @@ class MSSQLConnector(Connector):
         ])
         return q
 
+    def fetch_data(self, table, columns, force_query=False, **args):
+        '''
+        generator
+        '''
+        q = force_query if force_query else self.prepare_bulk_select_query(table, columns)
+
+        self.cursor.execute(q)
+        rows = self.cursor.fetchall()
+        header = map(lambda x:x[0],  self.cursor.description)
+        yield list(header)
+
+        for item in rows:
+            yield item
 
 
 #
