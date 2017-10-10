@@ -3,6 +3,7 @@ import logging
 import configparser
 import os.path
 import sys
+import textwrap
 
 import sit.connectors as connectors
 from sit.ui import Shell
@@ -177,6 +178,7 @@ def start():
     #  parser for the "copy to" command
     parser_to = subparsers.add_parser(
         'push',
+        formatter_class=argparse.RawTextHelpFormatter,
         help=(
             'Copy data to remote server. Can take regular CSV'
             ' directly from STDIN.\n')
@@ -191,12 +193,13 @@ def start():
     parser_to.add_argument(
         '-C', '--create', dest='create_table',
         action='store_true',
-        help=(
-            'automatically attempt to create a new table. '
-            'Column types will be naively inferred from first'
-            ' lines of data.\n'
-            'eg:'
-            '`$ cat dummy.csv | sit push -CT dummy_insert dev`'
+        help=textwrap.dedent('''\
+            automatically attempt to create a new table.
+            Column types will be naively inferred from first
+            lines of data.
+            eg:
+            `$ sit push -f dummy.csv -CT dummy_insert dev`
+'''
         )
     )
 
@@ -206,6 +209,7 @@ def start():
     #  parser for the "copy from" command
     parser_from = subparsers.add_parser(
         'pull',
+        formatter_class=argparse.RawTextHelpFormatter,
         help=(
             'Retrieve data from remote server. Outputs regular CSV'
             ' on stdout')
@@ -219,7 +223,16 @@ def start():
     )
     parser_from.add_argument(
         '-q', '--query', dest='query',
-        help='run a custom sqlquery for data retrieval',
+        help=textwrap.dedent('''
+            run a custom sqlquery for data retrieval.
+
+            example:
+
+            $ sit pull -q 'SELECT *
+            > FROM users U
+            > ORDER BY U.points
+            > LIMIT 100' staging > top_100_users.csv
+            '''),
         nargs='?'
     )
 
