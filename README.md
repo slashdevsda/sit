@@ -123,7 +123,7 @@ This file primarily avoids very long command lines.
 [dev]
 hostname = MSSQL-DV1-062
 port = 2003
-user = DOMAIN\\username
+user = DOMAIN\username
 password = mypassword
 database = test_database
 driver = sqlserver
