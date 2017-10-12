@@ -9,7 +9,6 @@ import sit.connectors as connectors
 from sit.ui import Shell
 import sit.copy
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
@@ -157,6 +156,8 @@ def start():
             'fallback on ~/.sit.ini'
             )
     )
+    parser.add_argument('--verbose', action='store_true',
+                            help='set DEBUG logging level')
     parser.add_argument('-u', '--user', help='username used')
     parser.add_argument('-e', '--engine', help='db engine/driver')
     parser.add_argument('-p', '--password', help='password used')
@@ -242,18 +243,22 @@ def start():
 
     args = parser.parse_args()
 
+    # setup logging
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+
+
     # converting arguments
     # to a regular dictionnary
     arguments = vars(args)
 
     config = read_config(arguments)
     if arguments['env'] not in config:
-        print(
+        log.error(
             'no such environement: {}. Availables envs are: {}.'.format(
                 arguments['env'],
                 ', '.join(config.keys()),
-            ),
-            file=sys.stderr
+            )
         )
         exit(1)
     config['current'] = dict(config[arguments['env']])
@@ -272,9 +277,13 @@ def start():
         for i in arguments if arguments.get(i)
     }
 
-
-    log.debug(str(config['current']))
     validate_config(config)
+    log.debug(
+        'working on %s (%s)',
+        config['current']['database'],
+        config['current']['driver']
+    )
+
     connector = connectors.get_connector(config['current'])
     connector.connect()
     if hasattr(args, 'func'):
