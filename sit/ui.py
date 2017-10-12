@@ -37,11 +37,6 @@ class SQLDynamicCompleter(Completer):
 
         st = document.find_previous_word_beginning()
 
-        # dynamic completion
-        if st and document.text[-1] == '.':
-            st += 1
-            completions = ['Util', 'Util_Email']
-
         for c in completions:
             yield Completion(c, start_position=st if st else 0)
 
