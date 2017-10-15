@@ -1,6 +1,3 @@
-#
-# connector are simple abtraction over database engines.
-#
 import re
 import itertools
 import logging
@@ -14,6 +11,11 @@ class TableAlreadyExists(Exception):
     pass
 
 class Connector(ABC):
+    '''
+    connectors are simple abtraction over database engines.
+
+    This is the base class of all connectors.
+    '''
 
     @abstractmethod
     def connect(self, **args):
@@ -35,22 +37,12 @@ class Connector(ABC):
     def prepare_bulk_insert_query(line_list, columns):
         raise NotImplemented()
 
-    #@abstractmethod
-    def read_table(self, n, select_list='*', **args):
-        pass
-
-    # object management
-    #@abstractmethod
-    def retrieve_object(self, objname, **args):
-        pass
-
-    #@abstractmethod
-    def update_object(self, objname, content, **args):
-        pass
-
-    #@abstractmethod
-    def delete_object(self, objname, **args):
-        pass
+    def prepare_bulk_select_query(self, table_name, columns):
+        q = 'SELECT {} FROM {};'.format(
+            ', '.join(columns),
+            table_name
+        )
+        return q
 
     def exec_query(self, q):
         r = self.cursor.execute(q)
@@ -62,16 +54,7 @@ class Connector(ABC):
         else:
             return ''
 
-    def prepare_bulk_select_query(self, table_name, columns):
-        q = 'SELECT {} FROM {};'.format(
-            ', '.join(columns),
-            table_name
-        )
-        return q
 
-
-
-    #@abstractmethod
     def fetch_data(self, table, columns, force_query=False, **args):
         '''
         generator

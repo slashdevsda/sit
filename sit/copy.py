@@ -1,10 +1,3 @@
-#
-# COPY
-#
-# read input CSV
-# deserialise
-# INSERT
-
 import sys
 import csv
 import logging
@@ -12,11 +5,11 @@ import logging
 log = logging.getLogger(__name__)
 
 
-
 def create_dest_table(tbn, columns, row, connector):
 
     table_name = tbn if tbn else str(int(time.time()))
     connector.create_table(table_name, columns, row)
+
 
 def copy_from_fd(table_name, fd, connector,
                      auto_detect=True,
