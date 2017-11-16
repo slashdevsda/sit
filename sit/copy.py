@@ -70,7 +70,8 @@ def copy_to_fd(table_name, fd, connector, arglist="*", force_query=False):
     '''
     '''
     writer = csv.writer(fd)
-    writer.writerows(
-        connector.fetch_data(table_name, arglist, force_query=force_query)
-    )
+    for row in connector.fetch_data(table_name, arglist, force_query=force_query):
+        writer.writerow(
+            row
+        )
     fd.flush()

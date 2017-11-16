@@ -5,7 +5,7 @@ _Stupid Import tool_
 
 
 _This program is currently under heavy development.
-It may be unusable for your usecase, incompatible with 
+It may be unusable for your usecase, incompatible with
 your SQL-Server instance or even be unusable at all_
 
 
@@ -24,7 +24,7 @@ Current supported databases:
 
 - SQL-Server (pymssql)
 - sqlite (sqlite3)
-	
+
 
 Maybe a pyodbc support will be implemented in a near future.
 (_pymssql_ seems hard to setup on a few OSes)
@@ -79,11 +79,11 @@ optional arguments:
   -T [TABLE_NAME], --table [TABLE_NAME]
                         extract data from this table
   -q [QUERY], --query [QUERY]
-                        
+
                         run a custom sqlquery for data retrieval.
-                        
+
                         example:
-                        
+
                         $ sit pull -q 'SELECT *
                         > FROM users U
                         > ORDER BY U.points
@@ -139,7 +139,7 @@ driver = sqlite
 # Create a table containing each line of records.csv,
 # naming table after the current timestamp.
 #
-# CSV comes from HTTP. Also, using pipes, 
+# CSV comes from HTTP. Also, using pipes,
 # no intermediate files are needed
 $ curl https://someurl/data.csv | sit push -C dev
 ```
@@ -226,6 +226,10 @@ and not very fault tolerant over a bad
 connection. However, this could be implemented,
 depending on usage.
 
+So far, the SQL-Server implementation was tested with
+1 000 000 rows tiny dataset (around 57 megs), and succeed
+both to import and export tasks.
+
 
 - speed
 
@@ -239,4 +243,3 @@ at least for the moment)
 This feature is not smart, even when it tries to guess
 columns types. Basically, it will fallback on VARCHAR/derivatives when stuck,
 meaning you could have to run some additional queries to tranform the data.
-

@@ -226,12 +226,14 @@ class MSSQLConnector(Connector):
         q = force_query if force_query else self.prepare_bulk_select_query(table, columns)
 
         self.cursor.execute(q)
-        rows = self.cursor.fetchall()
-        header = map(lambda x:x[0],  self.cursor.description)
-        yield list(header)
+        # csv header
+        yield list(map(lambda x:x[0],  self.cursor.description))
 
-        for item in rows:
-            yield item
+        # http://pymssql.org/en/stable/ref/pymssql.html#pymssql.Cursor.nextset
+        yield from self.cursor
+
+
+
 
 
 #
