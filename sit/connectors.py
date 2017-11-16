@@ -29,6 +29,14 @@ class Connector(ABC):
     def rollback_transaction(self):
         pass
 
+    @abstractmethod
+    def execute(self, q):
+        '''
+        Execute a query
+        and returns an iterable of iterables.
+        '''
+        pass
+
     ##
     ## Query preparation
     ##
@@ -45,7 +53,7 @@ class Connector(ABC):
         return q
 
     def exec_query(self, q):
-        r = self.cursor.execute(q)
+        r = self.execute(q)
         if r and self.cursor.description:
             out = ', '.join([i[0] for i in self.cursor.description])
             out += '\n'
@@ -82,8 +90,7 @@ class Connector(ABC):
             elif re.match("^(-)?\d+?\.\d+?$", item):
                 columns_with_types.append((colname, 'FLOAT'))
             else:
-                # todo: find a better solution for strings
-                # (automatic alters ?)
+                # TODO: find a better solution for strings
                 columns_with_types.append((colname, 'VARCHAR(255)'))
         return columns_with_types
 
@@ -107,7 +114,7 @@ class Connector(ABC):
         q += ');\n'
 
         try:
-            self.exec_query(q)
+            self.execute(q)
             return True
         except sqlite3.OperationalError as e:
             log.exception(e)
@@ -161,13 +168,27 @@ class MSSQLConnector(Connector):
         )
         self.cursor = self.conn.cursor()
 
-    def exec_query(self, q):
+    def execute(self, q, fetch_result=False):
+        '''
+        Execute a query and returns an iterable of iterables.
+
+        Does not fetch result by default, since Pymssql will raise
+        an OperationalError if done upon INSERT or UPDATE queries.
+        '''
         self.cursor.execute(q)
-        rows = None
+        if not fetch_result:
+            return
         try:
             rows = self.cursor.fetchall()
+            return rows
+
         except Exception as e:
             log.warn('warn:', exc_info=e)
+            return None
+
+
+    def exec_query(self, q):
+        rows = self.execute(q, fetch_result=True)
 
         if not rows or not hasattr(self.cursor, 'description'):
             return ''
@@ -238,6 +259,12 @@ class SQLiteConnector(Connector):
 
     def rollback_transaction(self):
         self.conn.rollback()
+
+    def execute(self, q):
+        '''
+        Execute a query and returns an iterable of iterables.
+        '''
+        return self.cursor.execute(q)
 
 
 
